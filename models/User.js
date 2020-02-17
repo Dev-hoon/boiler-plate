@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const saltRounds = 10 // 암호화 자리 숫자
-
+const jwt = require('jsonwebtoken')
 
 const userSchema = mongoose.Schema({
     name:{
@@ -46,8 +46,28 @@ userSchema.pre('save',function(next){
     }else{
         next()
     }
+    next()
 })
 
+userSchema.method.comparePassword = function(plainPassword, cb){
+    //plainPassWord is input 
+    bcrypt.compare(plainPassword, this.password,function(err,isMatch){
+        if(err) return cb(err),
+        cb(null,isMatch)
+    })
+
+}
+userSchema.methods.generateToken= function(cb){
+    //json webtoken을 이용해서 token 만들기
+    var user = this;
+    var token = jwt.sign(user._id.toHexString(),'secretToken')
+    //user._id + 'secretToken' = token
+    user.token = token
+    user.save(function(err,user){
+        if(err) return cb(err)
+        cb(null,user)
+    })
+}
 
 const User = mongoose.model('User', userSchema)
 
