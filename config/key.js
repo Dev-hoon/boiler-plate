@@ -1,5 +1,6 @@
 if(process.env.NODE_ENV === "product"){
     module.exports = require('./prod')
-} else{
+} 
+else {
     module.exports = require('./dev')
 }

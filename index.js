@@ -1,12 +1,12 @@
 const express = require('express') // express 모듈 가져오기
 const app = express()
 const port = 5000
-const mongoose = require('mongoose')
-const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
-const { User } = require('./models/User')
-const config = require('./config/key')
-
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const config = require('./config/key');
+const { auth } = require('./middleware/auth');
+const { User } = require('./models/Usger');
 // application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended:true}));
 
@@ -25,7 +25,7 @@ app.get('/', (req, res) => res.send('Hello World!'))
 //루트 디렉토리에 출력
 app.post('/api/users/register',(req, res) =>{
     //회원 가입에 필요한 정보들을 client 에서 가져오면
-    // 그것을 디비에 넣음
+    // 그것을 디비에 넣음-
     const user = new User(req.body)
     user.save((err,userInfo)=>{
         if(err) return res.json({success: false,err})
@@ -64,6 +64,31 @@ app.post('/api/users/login',(req,res)=>{
     })
 })
 
+
+// role 1 admin , role 0 customer
+app.get('/api/users/auth',auth,(req,res)=>{
+    // authentication true 
+    res.status(200).json({
+        _id : req.user._id,
+        isAdmin : req.user.role === 0? false:true,
+        isAuth : true,
+        email : req.user.email,
+        name : req.user.name,
+        lastname : req.user.lastname,
+        role : req.user.role,
+        image : req.user.image
+    })
+
+})
+
+app.get('/api/users/logout',auth,(req,res)=>{
+    User.findOneAndUpdate({_id:req.user._id},{token:""}, (err,user) => {
+        if (err) return res.json({success:false,err});
+        return res.status(200).send({
+            success:true
+        })
+    })
+})
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
